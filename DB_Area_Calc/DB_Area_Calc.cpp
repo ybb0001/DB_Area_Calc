@@ -483,17 +483,20 @@ unsigned int DB_Area_Calc::get_Image_Threshold()
 
 	unsigned int max = 0, n = 0,k=0; 
 	unsigned int peak[255] = { 0 };
-	for (int i = 255; i >50; i--) {
-		if (grey_Level[i] > grey_Level[i - 1] + 10 && peak[0] == 0) {
+	for (int i = 254; i >50; i--) {
+		if (grey_Level[i] > grey_Level[i - 1] + dia*0.01 && grey_Level[i] > grey_Level[i - 2] + dia*0.03 && peak[0] == 0) {
 			peak[0] = i;
 
 		}
+		dia;
 		if(peak[0] != 0&& peak[1] == 0&& grey_Level[i]<0.3*grey_Level[peak[0]])
-			if (grey_Level[i - 1] > grey_Level[i]+50 && grey_Level[i - 2] > 100 + grey_Level[i]) {
+			if (grey_Level[i - 1] > grey_Level[i]+ dia*0.03 && grey_Level[i - 2] > dia*0.06 + grey_Level[i]) {
 				peak[1] = i;
 			}
 	}
-	return peak[1]-3;
+	int ret = peak[1] - 3;
+	if (ret < 50)ret = 50;
+	return ret;
 }
 
 
@@ -894,7 +897,7 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 			//	if(TH > 100)
 			//		th = 32;
 			//	else
-					th += th*0.3;
+					th += (70-th)*0.2;
 			}
 			else if (th<80) {
 				th += (th - 50)*0.2;
@@ -1016,8 +1019,12 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 
 	float DB_rate = (float)(full_Size - edge_Size - remainder_Size) / (full_Size - edge_Size);
 
+	float final_result = DB_rate;
+	if (final_result < 0.9)
+		final_result *= offset;
+
 	ui->log->insertPlainText("DB Coverage Rate: ");
-	string s = to_string(offset*DB_rate) + '\n';
+	string s = to_string(final_result) + '\n';
 	ui->log->insertPlainText(s.c_str());
 
 	int x = 640, y = 480;

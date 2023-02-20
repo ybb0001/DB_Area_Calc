@@ -1,0 +1,16 @@
+
+*.sdf
+*.sln
+*.jpg
+*.db
+*.log
+*.tlog
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.txt
+*.filters
+*.vcxproj
+*.user
+*.qrc
