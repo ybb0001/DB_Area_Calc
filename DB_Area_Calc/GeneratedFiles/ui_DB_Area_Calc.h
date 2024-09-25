@@ -13,6 +13,7 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
@@ -45,6 +46,7 @@ public:
     QRadioButton *manual_BV;
     QPushButton *pushButton_ClearBack;
     QLabel *label_2;
+    QCheckBox *checkBox_Prism;
     QButtonGroup *buttonGroup;
 
     void setupUi(QWidget *DB_Area_Calc)
@@ -117,11 +119,15 @@ public:
         pushButton_ClearBack = new QPushButton(DB_Area_Calc);
         pushButton_ClearBack->setObjectName(QStringLiteral("pushButton_ClearBack"));
         pushButton_ClearBack->setEnabled(true);
-        pushButton_ClearBack->setGeometry(QRect(570, 500, 81, 30));
+        pushButton_ClearBack->setGeometry(QRect(575, 500, 81, 30));
         pushButton_ClearBack->setCheckable(false);
         label_2 = new QLabel(DB_Area_Calc);
         label_2->setObjectName(QStringLiteral("label_2"));
         label_2->setGeometry(QRect(390, 560, 260, 16));
+        checkBox_Prism = new QCheckBox(DB_Area_Calc);
+        checkBox_Prism->setObjectName(QStringLiteral("checkBox_Prism"));
+        checkBox_Prism->setGeometry(QRect(590, 540, 51, 16));
+        checkBox_Prism->setChecked(true);
 
         retranslateUi(DB_Area_Calc);
 
@@ -130,7 +136,7 @@ public:
 
     void retranslateUi(QWidget *DB_Area_Calc)
     {
-        DB_Area_Calc->setWindowTitle(QApplication::translate("DB_Area_Calc", "DB_Area_Calc R3_20211017", Q_NULLPTR));
+        DB_Area_Calc->setWindowTitle(QApplication::translate("DB_Area_Calc", "DB_Area_Calc_20240828", Q_NULLPTR));
         label_show_image->setText(QApplication::translate("DB_Area_Calc", "ShowImage", Q_NULLPTR));
         pushButton_open_BMP->setText(QApplication::translate("DB_Area_Calc", "Corner", Q_NULLPTR));
         groupBox->setTitle(QApplication::translate("DB_Area_Calc", "Binaryzation", Q_NULLPTR));
@@ -157,8 +163,9 @@ public:
         pushButton_clear->setText(QApplication::translate("DB_Area_Calc", "Clear", Q_NULLPTR));
         auto_BV->setText(QApplication::translate("DB_Area_Calc", "Auto BV", Q_NULLPTR));
         manual_BV->setText(QApplication::translate("DB_Area_Calc", "Manual BV", Q_NULLPTR));
-        pushButton_ClearBack->setText(QApplication::translate("DB_Area_Calc", "Sensor Image", Q_NULLPTR));
+        pushButton_ClearBack->setText(QApplication::translate("DB_Area_Calc", "Open Image", Q_NULLPTR));
         label_2->setText(QApplication::translate("DB_Area_Calc", "Supported by songye.guo@samsung.com", Q_NULLPTR));
+        checkBox_Prism->setText(QApplication::translate("DB_Area_Calc", "Prism", Q_NULLPTR));
     } // retranslateUi
 
 };

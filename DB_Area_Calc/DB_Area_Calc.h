@@ -5,6 +5,7 @@
 #include "core.hpp"
 #include"highgui.hpp"
 #include <algorithm>
+#include <opencv2/opencv.hpp>
 
 namespace Ui {
 class DB_Area_Calc;
@@ -27,6 +28,11 @@ private slots:
 	unsigned int get_Binaryztion_Level();
 	unsigned int get_backGround_Level();
 	unsigned int get_Image_Threshold();
+	unsigned int get_Image_Threshold_low();
+	unsigned int get_Image_100_min_max();
+
+	void sensor_area_calc();
+	void prism_area_calc();
 
 	int Rect_Correct();
 	int remove_Edge();

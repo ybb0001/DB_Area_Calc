@@ -3,7 +3,7 @@
 #include <QString>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <opencv2/opencv.hpp>
+
 #include <QTextCodec>
 #include <afx.h>
 #include<fstream> 
@@ -35,7 +35,7 @@ Line_Data Line_All[200], Line_Valid[100], Line_Rect[4];
 unsigned char bianryTh1 = 50, bianryTh2 = 100;
 unsigned int Corner_quality = 5, Coner_block = 7, grey_Level[256], BG_Level[256];
 unsigned int min_BG = 50, max_black = 15, dia, image_Threshold = 120, image_Total_Pixel=0;
-int Min_X = 99999999, Max_X = 0, Min_Y = 99999999, Max_Y = 0, Rect_Dia;
+int Min_X = 99999999, Max_X = 0, Min_Y = 99999999, Max_Y = 0, Rect_Dia, mRoi_cnt=0;
 
 Vector <Point> Edge_black;
 
@@ -183,23 +183,24 @@ int DB_Area_Calc::Rect_Correct() {
 
 int DB_Area_Calc::remove_Edge() {
 
+	int cnt = 0;
 	for (int i = 0; i < bin.rows; i++) {
 		uchar* inData = bin.ptr<uchar>(i);
 		for (int j = 0; j < bin.cols; j++) {
 
 			float a = (Rect4[1].x - Rect4[0].x)*(i - Rect4[0].y) - (Rect4[1].y - Rect4[0].y)*(j - Rect4[0].x);
 			float b = (Rect4[2].x - Rect4[1].x)*(i - Rect4[1].y) - (Rect4[2].y - Rect4[1].y)*(j - Rect4[1].x);
-			float c = (Rect4[3].x - Rect4[2].x)*(i - Rect4[2].y) - (Rect4[3].y - Rect4[2].y)*(j - Rect4[2].x);
-			float d = (Rect4[0].x - Rect4[3].x)*(i - Rect4[3].y) - (Rect4[0].y - Rect4[3].y)*(j - Rect4[3].x);
-			if ((a > 0 && b > 0 && c > 0 && d > 0) || (a < 0 && b < 0 && c < 0 && d < 0)) {
-
+			float c= (Rect4[0].x - Rect4[2].x)*(i - Rect4[2].y) - (Rect4[0].y - Rect4[2].y)*(j - Rect4[2].x);
+			if ((a > 0 && b > 0 && c > 0) || (a < 0 && b < 0 && c < 0)) {
+				cnt++;
+				if (inData[j] <24)inData[j] = 0;
 			}
 			else{
 				inData[j] = 230;
 			}
 		}
 	}
-	return 0;
+	return cnt;
 }
 
 
@@ -289,7 +290,6 @@ int DB_Area_Calc::edge_Fix() {
 	return 0;
 }
 
-
 void DB_Area_Calc::on_pushButton_open_BMP_clicked()
 {
 	load_Panel_Value();
@@ -303,13 +303,11 @@ void DB_Area_Calc::on_pushButton_open_BMP_clicked()
 	Mat normImage;//归一化后的图
 	Mat scaledImage;//线性变换后的八位无符号整型的图
 	
-	Rect ccomp;
 	if (name.length() < 2) return;
 	image = imread(name, 1);
 	out_image = image.clone();
 	src1 = image.clone();
 	dstImage = image.clone();
-
 	WIDTH1 = image.cols / 64;
 	HEIGHT1 = image.rows / 64;
 	int Cols = image.cols * 3;
@@ -329,7 +327,7 @@ void DB_Area_Calc::on_pushButton_open_BMP_clicked()
 
 	for (int i = 0; i < bin.rows; i++) {
 		uchar* inData = bin.ptr<uchar>(i);
-		for (int j = 0; j < bin.cols; j ++) {
+		for (int j = 0; j < bin.cols; j++) {
 			if (inData[j] == 0)
 				sum++;
 		}
@@ -343,8 +341,8 @@ void DB_Area_Calc::on_pushButton_open_BMP_clicked()
 
 	for (unsigned i = 0; i < corners.size(); i++) {
 		circle(src1, corners[i], 10, Scalar(10, 10, 255), 2, 4, 0);// Marking the Corner Point
-	/*	string s = to_string(corners[i].x) + " , " + to_string(corners[i].y) + "\n";
-		ui->log->insertPlainText(s.c_str());*/
+																   /*	string s = to_string(corners[i].x) + " , " + to_string(corners[i].y) + "\n";
+																   ui->log->insertPlainText(s.c_str());*/
 
 		float d = sqrt(corners[i].x*corners[i].x + corners[i].y*corners[i].y);
 		if (Rect4[0].edge > d || Rect4[0].edge < 1) {
@@ -353,14 +351,14 @@ void DB_Area_Calc::on_pushButton_open_BMP_clicked()
 			Rect4[0].y = corners[i].y;
 		}
 
-		d = sqrt((image.cols-corners[i].x)*(image.cols - corners[i].x) + corners[i].y*corners[i].y);
+		d = sqrt((image.cols - corners[i].x)*(image.cols - corners[i].x) + corners[i].y*corners[i].y);
 		if (Rect4[1].edge > d || Rect4[1].edge < 1) {
 			Rect4[1].edge = d;
 			Rect4[1].x = corners[i].x;
 			Rect4[1].y = corners[i].y;
 		}
 
-		d = sqrt((image.cols - corners[i].x)*(image.cols - corners[i].x) + (image.rows-corners[i].y)*(image.rows - corners[i].y));
+		d = sqrt((image.cols - corners[i].x)*(image.cols - corners[i].x) + (image.rows - corners[i].y)*(image.rows - corners[i].y));
 		if (Rect4[2].edge > d || Rect4[2].edge < 1) {
 			Rect4[2].edge = d;
 			Rect4[2].x = corners[i].x;
@@ -376,7 +374,7 @@ void DB_Area_Calc::on_pushButton_open_BMP_clicked()
 
 	}
 
-//	ret+=Rect_Correct();
+	//	ret+=Rect_Correct();
 	imwrite("corner.bmp", src1);
 
 	if (ret != 0) {
@@ -389,23 +387,23 @@ void DB_Area_Calc::on_pushButton_open_BMP_clicked()
 	cvtColor(bin, dst, CV_GRAY2BGR);
 
 	imwrite("cutting.bmp", dst);
-
+	Rect ccomp;
 	uchar* inData = dst.ptr<uchar>(Rect4[0].y + 15);
-	if(inData[3* (Rect4[0].x + 15)]<10)
-	floodFill(dst, Point(Rect4[0].x+15, Rect4[0].y + 15), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
-	if (inData[3 * (Rect4[1].x-15)]<10)
-	floodFill(dst, Point(Rect4[1].x- 15, Rect4[1].y + 15), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
-	
+	if (inData[3 * (Rect4[0].x + 15)]<10)
+		floodFill(dst, Point(Rect4[0].x + 15, Rect4[0].y + 15), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+	if (inData[3 * (Rect4[1].x - 15)]<10)
+		floodFill(dst, Point(Rect4[1].x - 15, Rect4[1].y + 15), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+
 	inData = dst.ptr<uchar>(Rect4[2].y - 15);
-	if (inData[3 * (Rect4[2].x-15)]<10)
-	floodFill(dst, Point(Rect4[2].x - 15, Rect4[2].y - 15), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+	if (inData[3 * (Rect4[2].x - 15)]<10)
+		floodFill(dst, Point(Rect4[2].x - 15, Rect4[2].y - 15), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 	if (inData[3 * (Rect4[3].x + 15)]<10)
-	floodFill(dst, Point(Rect4[3].x + 15, Rect4[3].y - 15), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+		floodFill(dst, Point(Rect4[3].x + 15, Rect4[3].y - 15), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
 	int c = Rect_Center.edge / 8;
 	inData = dst.ptr<uchar>(Rect_Center.y);
-	for (int i = 0; i < c*2; i += 10) {	
-		if (inData[3 * (Rect_Center.x - c + i)] == 100){
+	for (int i = 0; i < c * 2; i += 10) {
+		if (inData[3 * (Rect_Center.x - c + i)] == 100) {
 			floodFill(dst, Point(Rect_Center.x - c + i, Rect_Center.y), Scalar(25, 235, 235), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 			break;
 		}
@@ -438,16 +436,14 @@ void DB_Area_Calc::on_pushButton_open_BMP_clicked()
 
 	int x = 640, y = 480;
 	if (image.cols * 3 > image.rows * 4)
-		y = image.rows *640/ image.cols;
+		y = image.rows * 640 / image.cols;
 	else x = image.cols * 480 / image.rows;
 
-	cv::resize(dst, display_image,Size(x,y),0,0);
+	cv::resize(dst, display_image, Size(x, y), 0, 0);
 	imwrite("display.bmp", display_image);
 
 	ui->label_show_image->setPixmap(QPixmap("./display.bmp"));
-	
 }
-
 
 unsigned int DB_Area_Calc::get_Binaryztion_Level()
 {
@@ -470,7 +466,6 @@ unsigned int DB_Area_Calc::get_Binaryztion_Level()
 	return n;
 }
 
-
 unsigned int DB_Area_Calc::get_Image_Threshold()
 {
 	for (int i = 0; i < gray.rows; i++) {
@@ -488,7 +483,6 @@ unsigned int DB_Area_Calc::get_Image_Threshold()
 			peak[0] = i;
 
 		}
-		dia;
 		if(peak[0] != 0&& peak[1] == 0&& grey_Level[i]<0.3*grey_Level[peak[0]])
 			if (grey_Level[i - 1] > grey_Level[i]+ dia*0.03 && grey_Level[i - 2] > dia*0.06 + grey_Level[i]) {
 				peak[1] = i;
@@ -499,6 +493,57 @@ unsigned int DB_Area_Calc::get_Image_Threshold()
 	return ret;
 }
 
+unsigned int DB_Area_Calc::get_Image_Threshold_low()
+{
+	for (int i = 0; i < gray.rows; i++) {
+		uchar* inData = gray.ptr<uchar>(i);
+		for (int j = 0; j < gray.cols; j++) {
+			grey_Level[inData[j]]++;
+		}
+	}
+
+	unsigned int max = 0, n = 0, k = 0;
+	unsigned int peak[255] = { 0 };
+	for (int i = 0; i <100; i++) {
+		if (grey_Level[i] > grey_Level[i + 1] + dia*0.01 && grey_Level[i] > grey_Level[i + 2] + dia*0.03 && peak[0] == 0) {
+			peak[0] = i;
+		}
+		if (peak[0] != 0 && peak[1] == 0 && grey_Level[i]<0.3*grey_Level[peak[0]])
+			if (grey_Level[i + 1] > grey_Level[i] + dia*0.03 && grey_Level[i + 2] > dia*0.06 + grey_Level[i]) {
+				peak[1] = i;
+			}
+	}
+	int ret = peak[1] - 3;
+	if (ret < 32)ret = 32;
+	return ret;
+}
+
+unsigned int DB_Area_Calc::get_Image_100_min_max()
+{
+	for (int i = 0; i < gray.rows; i++) {
+		uchar* inData = gray.ptr<uchar>(i);
+		for (int j = 0; j < gray.cols; j++) {
+			grey_Level[inData[j]]++;
+		}
+	}
+
+	unsigned int BVmax = 0, BVmin= 25600000, n = 0, k = 0;
+	unsigned int peak[255] = { 0 };
+	for (int i = 0; i <90; i++) {
+		if (grey_Level[i] >BVmax) {
+			BVmax = grey_Level[i];
+			peak[0] = i;
+		}
+	}
+
+	for (int i = peak[0]; i < 90; i++) {
+		if (grey_Level[i] < BVmin) {
+			BVmin = grey_Level[i];
+			peak[1] = i;
+		}
+	}
+	return peak[1];
+}
 
 unsigned int DB_Area_Calc::get_backGround_Level()
 {
@@ -526,7 +571,6 @@ unsigned int DB_Area_Calc::get_backGround_Level()
 	int avg = sum / 2 / gray.cols;
 	return avg;
 }
-
 
 Point get_intersection(Point p1, Point p2, Point q1, Point q2) {
 
@@ -568,29 +612,8 @@ int DB_Area_Calc::getTH(int k, int offset) {
 	return bv;
 }
 
+void DB_Area_Calc::sensor_area_calc() {
 
-void DB_Area_Calc::on_pushButton_ClearBack_clicked()
-{
-	load_Panel_Value();
-	ui->log->setText("");
-
-	QString qs_name = QFileDialog::getOpenFileName(this, tr("Open Image"), "", tr("Image File(*.bmp *.jpg *.jpeg *.png *.pbm *.pgm *.ppm)"));
-	QTextCodec *code = QTextCodec::codecForName("gb18030");
-	name = code->fromUnicode(qs_name).data();
-
-	Mat dstImage;//目标图
-	Mat normImage;//归一化后的图
-	Mat scaledImage;//线性变换后的八位无符号整型的图
-
-	Rect ccomp;
-	if (name.length() < 2) return;
-	image = imread(name, 1);
-	out_image = image.clone();
-	src1 = image.clone();
-	dstImage = image.clone();
-
-	WIDTH1 = image.cols / 64;
-	HEIGHT1 = image.rows / 64;
 	int Cols = image.cols * 3;
 	int ret = 0, n = 0, TH = 0, Valid_TH = 60;
 	if (image.cols < 600)Valid_TH = image.cols / 6;
@@ -805,7 +828,7 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 			return;
 		}
 	int diff = Line_Rect[1].rho - Line_Rect[3].rho;
-	if (diff>-5&& diff<5) {
+	if (diff>-5 && diff<5) {
 		string s = "Can not find Sensor Rect Outline! \n";
 		ui->log->insertPlainText(s.c_str());
 		return;
@@ -893,11 +916,11 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 		for (int x = 0; x < w * 2; x += w) {
 			Mat quart = bin(Rect(Min_X + x, Min_Y + y, w, h));
 			int th = getTH(F[n++], h / 16);
-			if (th < 50){
-			//	if(TH > 100)
-			//		th = 32;
-			//	else
-					th += (70-th)*0.2;
+			if (th < 50) {
+				//	if(TH > 100)
+				//		th = 32;
+				//	else
+				th += (70 - th)*0.2;
 			}
 			else if (th<80) {
 				th += (th - 50)*0.2;
@@ -920,8 +943,8 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 	imwrite("bin2.bmp", bin);
 
 	edge_Fix();
-	
-	int c = Rect_Center.edge / 16;
+
+	int c = Rect_Center.edge / 16;	Rect ccomp;
 	uchar* inData = bin.ptr<uchar>(Rect_Center.y);
 	for (int i = 0; i < c * 2; i += 10) {
 		if (inData[(Rect_Center.x - c + i)] == 100) {
@@ -932,10 +955,10 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 
 	for (int i = Min_Y; i < Max_Y; i++) {
 		uchar* inData = bin.ptr<uchar>(i);
-		for (int j = Min_X; j < Max_X; j ++) {
+		for (int j = Min_X; j < Max_X; j++) {
 			if (inData[j] == 100) {
 
-				if(inData[j-1] == 150){
+				if (inData[j - 1] == 150) {
 					floodFill(bin, Point(j, i), Scalar(150, 150, 150), &ccomp, Scalar(1, 1, 1), Scalar(1, 1, 1));
 				}
 				else {
@@ -966,29 +989,29 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 	if (inData[3 * (Rect4[0].x + fill_offset)]<10)
 		floodFill(dst, Point(Rect4[0].x + fill_offset, Rect4[0].y + fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
-	if (inData[3 * (Rect4[0].x + fill_offset*2)]<10)
-		floodFill(dst, Point(Rect4[0].x + fill_offset*2, Rect4[0].y + fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+	if (inData[3 * (Rect4[0].x + fill_offset * 2)]<10)
+		floodFill(dst, Point(Rect4[0].x + fill_offset * 2, Rect4[0].y + fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
 	if (inData[3 * (Rect4[1].x - fill_offset)]<10)
 		floodFill(dst, Point(Rect4[1].x - fill_offset, Rect4[1].y + fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
-	if (inData[3 * (Rect4[1].x - fill_offset*2)]<10)
-		floodFill(dst, Point(Rect4[1].x - fill_offset*2, Rect4[1].y + fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+	if (inData[3 * (Rect4[1].x - fill_offset * 2)]<10)
+		floodFill(dst, Point(Rect4[1].x - fill_offset * 2, Rect4[1].y + fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
 	inData = dst.ptr<uchar>(Rect4[2].y - fill_offset);
 	if (inData[3 * (Rect4[2].x - fill_offset)]<10)
 		floodFill(dst, Point(Rect4[2].x - fill_offset, Rect4[2].y - fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
-	if (inData[3 * (Rect4[2].x - fill_offset*2)]<10)
-		floodFill(dst, Point(Rect4[2].x - fill_offset*2, Rect4[2].y - fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+	if (inData[3 * (Rect4[2].x - fill_offset * 2)]<10)
+		floodFill(dst, Point(Rect4[2].x - fill_offset * 2, Rect4[2].y - fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
 	if (inData[3 * (Rect4[3].x + fill_offset)]<10)
 		floodFill(dst, Point(Rect4[3].x + fill_offset, Rect4[3].y - fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
-	if (inData[3 * (Rect4[3].x + fill_offset*2)]<10)
-		floodFill(dst, Point(Rect4[3].x + fill_offset*2, Rect4[3].y - fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+	if (inData[3 * (Rect4[3].x + fill_offset * 2)]<10)
+		floodFill(dst, Point(Rect4[3].x + fill_offset * 2, Rect4[3].y - fill_offset), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
 
-	
+
 	line(bin, Point(Rect4[0].x, Rect4[0].y), Point(Rect4[1].x, Rect4[1].y), Scalar(255, 255, 255), 1, 8);
 	line(bin, Point(Rect4[1].x, Rect4[1].y), Point(Rect4[2].x, Rect4[2].y), Scalar(255, 255, 255), 1, 8);
 	line(bin, Point(Rect4[2].x, Rect4[2].y), Point(Rect4[3].x, Rect4[3].y), Scalar(255, 255, 255), 1, 8);
@@ -998,7 +1021,7 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 	imwrite("bin4.bmp", bin);
 
 	int full_Size = image.cols * image.rows;
-	int edge_Size = 0;  
+	int edge_Size = 0;
 	int remainder_Size = 0;
 
 	line(dst, Point(Rect4[0].x, Rect4[0].y), Point(Rect4[1].x, Rect4[1].y), Scalar(230, 230, 230), 1, 8);
@@ -1010,7 +1033,7 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 	for (int i = 0; i < dst.rows; i++) {
 		uchar* inData = dst.ptr<uchar>(i);
 		for (int j = 0; j < Cols; j += 3) {
-			if (inData[j] == 250 && inData[j+1] == 250)
+			if (inData[j] == 250 && inData[j + 1] == 250)
 				remainder_Size++;
 			else if (inData[j] == 230)
 				edge_Size++;
@@ -1036,6 +1059,475 @@ void DB_Area_Calc::on_pushButton_ClearBack_clicked()
 	imwrite("display.bmp", display_image);
 
 	ui->label_show_image->setPixmap(QPixmap("./display.bmp"));
+
+}
+
+int my_floodfill( Mat image, Point seedPoint ){
+
+	BYTE seedBV = image.at<uchar>(seedPoint.y, seedPoint.x);
+
+	if (seedBV==0) {
+		image.at<uchar>(seedPoint.y, seedPoint.x) = 55;
+		mRoi_cnt++;
+		if (seedPoint.x > Max_X) Max_X = seedPoint.x;
+		if (seedPoint.x < Min_X) Min_X = seedPoint.x;
+		if (seedPoint.y > Max_Y) Max_Y = seedPoint.y;
+		if (seedPoint.y < Min_Y) Min_Y = seedPoint.y;
+
+		if (seedPoint.y > 0) {
+			Point p(seedPoint.x, seedPoint.y-1);
+			my_floodfill(image, p);
+		}
+		if (seedPoint.x > 0) {
+			Point p(seedPoint.x - 1, seedPoint.y );
+			my_floodfill(image, p);
+		}
+		if (seedPoint.y < image.rows-1) {
+			Point p(seedPoint.x, seedPoint.y + 1);
+			my_floodfill(image, p);
+		}
+		if (seedPoint.x < image.cols - 1) {
+			Point p(seedPoint.x + 1, seedPoint.y );
+			my_floodfill(image, p);
+		}
+	}
+	return 0;
+}
+
+void DB_Area_Calc::prism_area_calc() {
+
+	int Cols = image.cols * 3;
+	int ret = 0, n = 0, TH = 0, Valid_TH = 48;
+	if (image.cols < 600)Valid_TH = image.cols / 20;
+
+	dia = sqrt(image.cols*image.cols + image.rows*image.rows);
+	image_Total_Pixel = image.cols*image.rows;
+
+	if (dia < 750)
+		blur(src1, src1, Size(3, 3));
+	else if (dia < 3000)
+		blur(src1, src1, Size(5, 5));
+	else
+		blur(src1, src1, Size(7, 7));
+
+	cvtColor(src1, gray, CV_BGR2GRAY);
+
+	min_BG = get_backGround_Level();
+	TH = get_Image_100_min_max();
+
+	imwrite("grey.bmp", gray);
+	if (ui->manual_BV->isChecked()) TH = bianryTh1;
+
+	threshold(gray, bin, TH, 100, THRESH_BINARY);
+	imwrite("bin1.bmp", bin);
+	bin1 = bin.clone();
+
+	Canny(bin, edge, 3, 9, 3);
+	imwrite("edge.bmp ", edge);
+	Line_Data max_Line;
+	max_Line.valid_Point = 0;
+
+	//【3】进行霍夫线变换
+	vector<Vec2f> lines;//定义一个矢量结构lines用于存放得到的线段矢量集合
+	HoughLines(edge, lines, 1, CV_PI / 180, Valid_TH, 0, 0);
+
+	int TH2 = 30;
+	while (lines.size()>300 && TH2<200) {
+		HoughLines(edge, lines, 1, CV_PI / 180, Valid_TH + TH2, 0, 0);
+		TH2 += 30;
+	}
+	memset(Line_All, 0, sizeof(Line_Rect));
+	memset(Line_Valid, 0, sizeof(Line_Valid));
+
+	int Half_Width = bin.cols / 2, Half_Height = bin.rows / 2;
+
+	//【4】依次在图中绘制出每条线段
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		Line_All[i].rho = lines[i][0], Line_All[i].theta = lines[i][1];
+		Point p;
+		double a = cos(Line_All[i].theta), b = sin(Line_All[i].theta);
+		double x0 = a*Line_All[i].rho, y0 = b*Line_All[i].rho;
+
+		int s1 = cvRound((x0) / b);
+		int s2 = cvRound((x0 - image.cols) / b);
+		int last_x = 0, last_y = 0;;
+		Line_All[i].valid_Point = 0;
+		if (s1 > s2)swap(s1, s2);
+		if (s1 < -5000)s1 = -5000;
+		if (s2 > 5000)s2 = 5000;
+		for (int k = s1; k < s2; k++) {
+			p.x = cvRound(x0 + k * (-b));
+
+			if (p.x == last_x)continue;
+			if (p.x < 10)continue;
+			if (p.x > image.cols - 11)continue;
+
+			p.y = cvRound(y0 + k * (a));
+			if (p.y < 10)continue;
+			if (p.y > image.rows - 11)continue;
+			// UD / LR continuous Point count
+			if (p.y>Half_Height&&bin.at<uchar>(p.y - 1, p.x) == 0 && bin.at<uchar>(p.y + 1, p.x) == 100) {
+				if (bin.at<uchar>(p.y - 1, p.x - 1) == 0 && bin.at<uchar>(p.y + 1, p.x - 1) == 100)
+					if (bin.at<uchar>(p.y - 1, p.x + 1) == 0 && bin.at<uchar>(p.y + 1, p.x + 1) == 100)
+						Line_All[i].valid_Point++;
+			}
+			else if (p.y<Half_Height&&bin.at<uchar>(p.y - 1, p.x) == 100 && bin.at<uchar>(p.y + 1, p.x) == 0) {
+				if (bin.at<uchar>(p.y - 1, p.x - 1) == 100 && bin.at<uchar>(p.y + 1, p.x - 1) == 0)
+					if (bin.at<uchar>(p.y - 1, p.x + 1) == 100 && bin.at<uchar>(p.y + 1, p.x + 1) == 0)
+						Line_All[i].valid_Point++;
+			}
+			else if (p.x>Half_Width&&bin.at<uchar>(p.y, p.x - 1) == 0 && bin.at<uchar>(p.y, p.x + 1) == 100) {
+				if (bin.at<uchar>(p.y - 1, p.x - 1) == 0 && bin.at<uchar>(p.y - 1, p.x + 1) == 100)
+					if (bin.at<uchar>(p.y + 1, p.x - 1) == 0 && bin.at<uchar>(p.y + 1, p.x + 1) == 100)
+						Line_All[i].valid_Point++; 
+			}
+			else if (p.x<Half_Width&&bin.at<uchar>(p.y, p.x - 1) == 100 && bin.at<uchar>(p.y, p.x + 1) == 0) {
+				if (bin.at<uchar>(p.y + 1, p.x - 1) == 100 && bin.at<uchar>(p.y + 1, p.x + 1) == 0)
+					if (bin.at<uchar>(p.y - 1, p.x - 1) == 100 && bin.at<uchar>(p.y - 1, p.x + 1) == 0)
+						Line_All[i].valid_Point++;
+			}
+			//else if (bin.at<uchar>(p.y + 1, p.x - 2) == 0 && bin.at<uchar>(p.y - 1, p.x + 1) == 100) {
+			//	if (bin.at<uchar>(p.y-1 + 1, p.x-1 - 2) == 0 && bin.at<uchar>(p.y-1 - 1, p.x-1 + 1) == 100)
+			//		if (bin.at<uchar>(p.y+1 + 1, p.x+1 - 1) == 0 && bin.at<uchar>(p.y+1 - 1, p.x+1 + 1) == 100)
+			//			Line_All[i].valid_Point++;
+			//}
+			//else if (bin.at<uchar>(p.y-1, p.x - 1) == 100 && bin.at<uchar>(p.y+1, p.x + 1) == 0) {
+			//	if (bin.at<uchar>(p.y+1 - 1, p.x-1 - 1) == 100 && bin.at<uchar>(p.y+1 + 1, p.x-1 + 1) == 0)
+			//		if (bin.at<uchar>(p.y-1 - 1, p.x+1 - 1) == 100 && bin.at<uchar>(p.y-1 + 1, p.x+1 + 1) == 0)
+			//			Line_All[i].valid_Point++;
+			//}
+
+			last_x = p.x;
+		}
+
+		s1 = cvRound((-y0) / a);
+		s2 = cvRound((image.rows - y0) / a);
+		if (s1 > s2)swap(s1, s2);
+		if (s1 < -5000)s1 = -5000;
+		if (s2 > 5000)s2 = 5000;
+
+		for (int k = s1; k < s2; k++) {
+
+			p.y = cvRound(y0 + k * (a));
+			if (p.y == last_y)continue;
+			if (p.y < 11)continue;
+			if (p.y > image.rows - 12)continue;
+
+			p.x = cvRound(x0 + k * (-b));
+			if (p.x < 11)continue;
+			if (p.x > image.cols - 12)continue;
+
+			if (p.y > Half_Height&&bin.at<uchar>(p.y - 1, p.x) == 0 && bin.at<uchar>(p.y + 1, p.x) == 100)
+				Line_All[i].valid_Point++;
+			else if (p.y < Half_Height&&bin.at<uchar>(p.y, p.x - 1) == 0 && bin.at<uchar>(p.y, p.x + 1) == 100)
+				Line_All[i].valid_Point++;
+			else if (p.x > Half_Width&&bin.at<uchar>(p.y - 1, p.x) == 100 && bin.at<uchar>(p.y + 1, p.x) == 0)
+				Line_All[i].valid_Point++;
+			else if (p.x<Half_Width&&bin.at<uchar>(p.y, p.x - 1) == 100 && bin.at<uchar>(p.y, p.x + 1) == 0)
+				Line_All[i].valid_Point++;
+			//else if (bin.at<uchar>(p.y - 1, p.x - 1) + bin.at<uchar>(p.y + 1, p.x + 1) == 100)
+			//	Line_All[i].valid_Point++;
+			//else if (bin.at<uchar>(p.y - 1, p.x + 1) + bin.at<uchar>(p.y + 1, p.x - 1) == 100)
+			//	Line_All[i].valid_Point++;
+
+			last_y = p.y;
+		}
+
+		if (Line_All[i].valid_Point > Valid_TH) {
+			Line_All[i].pt1.x = cvRound(x0 + 5000 * (-b));
+			Line_All[i].pt1.y = cvRound(y0 + 5000 * (a));
+			Line_All[i].pt2.x = cvRound(x0 - 5000 * (-b));
+			Line_All[i].pt2.y = cvRound(y0 - 5000 * (a));
+			line(image, Line_All[i].pt1, Line_All[i].pt2, Scalar(0, 0, 255), 1, CV_AA);
+			Line_Valid[n++] = Line_All[i];
+		}
+
+		if (Line_All[i].valid_Point > max_Line.valid_Point) {
+			max_Line = Line_All[i];
+		}
+	}
+	Line_Data voilid_max;
+	double a = cos(max_Line.theta), b = sin(max_Line.theta);
+	double x0 = a*max_Line.rho, y0 = b*max_Line.rho;
+
+	voilid_max.pt1.x = cvRound(x0 + 5000 * (-b));
+	voilid_max.pt1.y = cvRound(y0 + 5000 * (a));
+	voilid_max.pt2.x = cvRound(x0 - 5000 * (-b));
+	voilid_max.pt2.y = cvRound(y0 - 5000 * (a));
+	line(image, voilid_max.pt1, voilid_max.pt2, Scalar(255, 255, 55), 2, CV_AA);
+
+	memset(Line_Rect, 0, sizeof(Line_Rect));
+	Line_Rect[0] = max_Line;
+	imwrite("line1.bmp", image);
+	//find 3 line
+	for (int i = 0; i < n; i++)
+		if (Line_Valid[i].valid_Point < Line_Rect[0].valid_Point) {
+			Line_Valid[i].v = Line_Rect[0].theta - Line_Valid[i].theta;
+			if (abs(Line_Valid[i].v) > CV_PI / 2 * 0.98&&abs(Line_Valid[i].v) < CV_PI / 2 * 1.02) {
+				line(image, Line_Valid[i].pt1, Line_Valid[i].pt2, Scalar(0, 0, 255), 1, CV_AA);
+				if (Line_Valid[i].valid_Point > Line_Rect[1].valid_Point) 
+					if (Line_Rect[1].rho == 0 || Line_Valid[i].rho<Line_Rect[1].rho + 3) {
+					Line_Rect[1] = Line_Valid[i];
+				}
+			}
+			else if (Line_Rect[0].theta> CV_PI * 3 / 4 * 0.8&&Line_Rect[0].theta< CV_PI * 3 / 4 * 1.2&&  Line_Valid[i].v > CV_PI / 4 * 0.95&&Line_Valid[i].v < CV_PI / 4 * 1.05) {
+				if (Line_Valid[i].valid_Point > Line_Rect[1].valid_Point) 
+					if (Line_Rect[1].rho == 0 || Line_Valid[i].rho<Line_Rect[1].rho + 15) {
+					Line_Rect[1] = Line_Valid[i];
+				}
+			}
+			else if (Line_Rect[0].theta> CV_PI / 4 * 0.8&&Line_Rect[0].theta< CV_PI * 1 / 4 * 1.2&&  Line_Valid[i].v > CV_PI / 4 * -1.05&&Line_Valid[i].v < CV_PI / 4 * -0.95) {
+				if (Line_Valid[i].valid_Point > Line_Rect[1].valid_Point&&Line_Valid[i].theta >  CV_PI / 2 * 0.95&&Line_Valid[i].theta <  CV_PI / 2 * 1.05){
+					if(Line_Rect[1].rho ==0||Line_Valid[i].rho<Line_Rect[1].rho+15)
+						Line_Rect[1] = Line_Valid[i];
+				}
+				else if (Line_Valid[i].valid_Point>32 && Line_Valid[i].valid_Point > Line_Rect[1].valid_Point*0.6&&Line_Valid[i].rho<Line_Rect[1].rho) {
+					Line_Rect[1] = Line_Valid[i];
+				}
+			}
+			else if ((Line_Rect[0].theta< CV_PI / 8 ||Line_Rect[0].theta > CV_PI *7/8)&&abs(Line_Valid[i].v) > CV_PI / 4 * 0.94&&abs(Line_Valid[i].v) < CV_PI / 4 * 1.06) {
+				if (Line_Valid[i].valid_Point > Line_Rect[2].valid_Point) {
+					Line_Rect[2] = Line_Valid[i];
+				}
+			}
+			else if ((abs(Line_Valid[i].v) > CV_PI * 3 / 4 * 0.97&&abs(Line_Valid[i].v) < CV_PI * 3 / 4 * 1.03)||
+					(abs(Line_Valid[i].v) > CV_PI / 4 * 0.97&&abs(Line_Valid[i].v) < CV_PI / 4 * 1.03)) {
+					if (Line_Valid[i].valid_Point > Line_Rect[2].valid_Point * 2) {
+						Line_Rect[2] = Line_Valid[i];
+					}
+					else if (Line_Rect[2].valid_Point == 0 && Line_Valid[i].valid_Point > Line_Rect[2].valid_Point) {
+						Line_Rect[2] = Line_Valid[i];
+					}
+					else if (Line_Valid[i].valid_Point > 0 && Line_Valid[i].valid_Point > Line_Rect[2].valid_Point*0.6&&Line_Valid[i].rho < Line_Rect[2].rho &&Line_Valid[i].rho > Line_Rect[2].rho-100) {
+						Line_Rect[2] = Line_Valid[i];
+					}
+				}	
+		}
+	for (int k = 1; k< 3; k++)
+		if (Line_Rect[k].valid_Point == 0) {
+			string s = "Can not find Sensor Rect Outline! \n";
+			ui->log->insertPlainText(s.c_str());
+			return;
+		}
+
+	// one edge double line selection 
+	for (int k = 0; k < 3; k++) {
+		for (int i = 0; i < n; i++)
+			if (Line_Valid[i].valid_Point < Line_Rect[k].valid_Point) 
+				if (Line_Valid[i].theta > Line_Rect[k].theta* 0.99&&Line_Valid[i].theta < Line_Rect[k].theta * 1.01)
+					if (abs(Line_Valid[i].rho - Line_Rect[k].rho)>3&& Line_Valid[i].valid_Point > Line_Rect[k].valid_Point*0.5)					{
+						if (Line_Valid[i].theta > CV_PI * 3 / 4 * 0.9&& Line_Valid[i].theta < CV_PI * 3 / 4 * 1.1&&Line_Valid[i].rho < Line_Rect[k].rho)
+							Line_Rect[k] = Line_Valid[i];
+						break;
+					}
+	}
+
+	// short edge diff angle selection 
+	for (int k = 1; k < 3; k++) {
+		if (Line_Rect[0].theta< CV_PI / 8 || Line_Rect[0].theta > CV_PI * 7 / 8) {
+			Line_Rect[k].v = abs(Line_Rect[0].theta - Line_Rect[k].theta) - (CV_PI / 2);
+			for (int i = 0; i < n; i++)
+				if (Line_Valid[i].theta > CV_PI * 1 / 2 * 0.9&&Line_Valid[i].theta < CV_PI * 1 / 2 * 1.1) {
+					Line_Valid[i].v = abs(Line_Rect[0].theta - Line_Valid[i].theta) - (CV_PI / 2);
+
+					if (abs(Line_Valid[i].v) < abs(Line_Rect[k].v) && Line_Valid[i].rho <Line_Rect[k].rho + 15 && Line_Valid[i].valid_Point > Line_Rect[k].valid_Point*0.6) {
+						Line_Rect[k] = Line_Valid[i];
+						break;
+					}
+				}
+
+		}else if (Line_Rect[k].theta > CV_PI * 1 / 2 * 0.9&&Line_Rect[k].theta < CV_PI * 1 / 2 * 1.1) {
+			Line_Rect[k].v = abs(Line_Rect[3 - k].theta - Line_Rect[k].theta) - (CV_PI / 2);
+			for (int i = 0; i < n; i++)
+				if (Line_Valid[i].theta > CV_PI * 1 / 2 * 0.9&&Line_Valid[i].theta < CV_PI * 1 / 2 * 1.1) {
+					Line_Valid[i].v = abs(Line_Rect[3 - k].theta - Line_Valid[i].theta) - (CV_PI / 2);
+
+					if (abs(Line_Valid[i].v) < abs(Line_Rect[k].v) && Line_Valid[i].rho <Line_Rect[k].rho + 15 && Line_Valid[i].valid_Point > Line_Rect[k].valid_Point*0.6) {
+						Line_Rect[k] = Line_Valid[i];
+						break;
+					}
+				}
+		}
+	}
+
+	for (int i = 0; i < 3; i++) {
+
+		int j = (i + 1) % 3;
+		Point p = get_intersection(Line_Rect[i].pt1, Line_Rect[i].pt2, Line_Rect[j].pt1, Line_Rect[j].pt2);
+		circle(src1, p, 10, Scalar(10, 10, 255), 2, 4, 0);
+
+		Rect4[i].x = p.x;
+		Rect4[i].y = p.y;
+	}
+
+	line(image, Point(Rect4[0].x, Rect4[0].y), Point(Rect4[1].x, Rect4[1].y), Scalar(0, 255, 255), 2, CV_AA);
+	line(image, Point(Rect4[1].x, Rect4[1].y), Point(Rect4[2].x, Rect4[2].y), Scalar(0, 255, 255), 2, CV_AA);
+	line(image, Point(Rect4[2].x, Rect4[2].y), Point(Rect4[0].x, Rect4[0].y), Scalar(0, 255, 255), 2, CV_AA);
+
+	//	ret += Rect_Correct();
+	imwrite("line2.bmp", image);
+
+	if (ret != 0) {
+		string s = "Can not find Sensor Rect Outline! \n";
+		ui->log->insertPlainText(s.c_str());
+		return;
+	}
+	///////////////////////////////////////////////////////////////////////////
+	//bin = gray.clone();
+
+	int bg = remove_Edge();
+
+	line(bin, Point(Rect4[0].x, Rect4[0].y), Point(Rect4[1].x, Rect4[1].y), Scalar(255, 255, 255), 1, 8);
+	line(bin, Point(Rect4[1].x, Rect4[1].y), Point(Rect4[2].x, Rect4[2].y), Scalar(255, 255, 255), 1, 8);
+	line(bin, Point(Rect4[2].x, Rect4[2].y), Point(Rect4[0].x, Rect4[0].y), Scalar(255, 255, 255), 1, 8);
+	//imwrite("bin2.bmp", bin);
+
+	cvtColor(bin, dst, CV_GRAY2BGR);
+	imwrite("cutting.bmp", dst);
+
+	Rect ccomp;
+	uchar* inData;
+	int fill_offset = 16;
+
+	for (int i = 0; i < 3; i++) {	
+		bool f = false;
+		for (int y = -32; y < 32; y += 8) {
+			if (f) break;
+			for (int x = -32; x < 32; x += 8) {
+				if (Rect4[i].y + y>8 && Rect4[i].x + x>8 && Rect4[i].y + y < image.rows-9&&Rect4[i].x + x < image.cols-9)
+				if (bin.at<uchar>(Rect4[i].y + y, Rect4[i].x + x) == 0) {
+					int cnt =floodFill(dst, Point( Rect4[i].x + x, Rect4[i].y + y), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+					int cnt1 = floodFill(bin, Point(Rect4[i].x + x, Rect4[i].y + y), Scalar(55, 55, 55), &ccomp, Scalar(1, 1, 1), Scalar(1, 1, 1));
+
+					//f = true;
+					//break;
+				}
+			}
+		}
+	}
+
+	int full_Size = image.cols * image.rows;
+	int edge_Size = 0;
+	int remainder_Size = 0;
+
+	line(dst, Point(Rect4[0].x, Rect4[0].y), Point(Rect4[1].x, Rect4[1].y), Scalar(255, 255, 255), 1, 8);
+	line(dst, Point(Rect4[1].x, Rect4[1].y), Point(Rect4[2].x, Rect4[2].y), Scalar(255, 255, 255), 1, 8);
+	line(dst, Point(Rect4[2].x, Rect4[2].y), Point(Rect4[0].x, Rect4[0].y), Scalar(255, 255, 255), 1, 8);
+
+	float line1 = sqrt(pow(Rect4[0].x- Rect4[1].x, 2)+ pow(Rect4[0].y - Rect4[1].y, 2));
+	float line2 = sqrt(pow(Rect4[1].x - Rect4[2].x, 2) + pow(Rect4[1].y - Rect4[2].y, 2));
+	float line3 = sqrt(pow(Rect4[0].x - Rect4[2].x, 2) + pow(Rect4[0].y - Rect4[2].y, 2));
+
+	float max_line = max(line1, max(line2, line3));
+	imwrite("bin2.bmp", bin);
+
+	Mat bin2 = bin.clone();
+	//edge_fix
+	for (int i = 3; i < dst.rows-3; i++) {
+		uchar* inData = dst.ptr<uchar>(i);
+		for (int j = 3; j < Cols-3; j += 3) {
+			if (inData[j] == 255 && inData[j + 1] == 255 && inData[j + 2] == 255) {
+
+				if (i > 420 && j / 3 < 430) {
+					int xxxx = 0;
+				}
+
+				for (int y = -3; y <= 3; y+=1)
+					for (int x = -3; x <= 3; x+=1) {
+						if (bin.at<uchar>(i + y, j / 3 + x) == 100) {
+
+							int cnt = floodFill(bin, Point(j / 3 + x, i + y), Scalar(0, 0, 0), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+							if (cnt < max_line*2) {
+								floodFill(bin, Point(j / 3 + x, i + y), Scalar(0, 0, 0), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+								floodFill(dst, Point(j / 3 + x, i + y), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+							}
+							else if(cnt < max_line*5){
+								floodFill(bin, Point(j / 3 + x, i + y), Scalar(230, 230, 230), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+								floodFill(dst, Point(j / 3 + x, i + y), Scalar(230, 230, 230), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+
+							}
+
+						}
+						
+						if (bin2.at<uchar>(i + y, j / 3 + x) == 0) {
+							Min_X = 99999999, Max_X = 0, Min_Y = 99999999, Max_Y = 0, mRoi_cnt = 0;
+							Point p(j / 3 + x, i + y);
+							my_floodfill(bin2,p);
+							float center_dis = sqrt(pow(j / 3-bin2.cols/2,2)+ pow(i - bin2.rows / 2, 2));
+							bool bond = (abs(Max_Y - Min_Y)>abs(Max_X - Min_X) * 2)&& (center_dis>max_line/4);
+							int mRect_cnt = (Max_X - Min_X)*(Max_Y - Min_Y);
+							if (mRoi_cnt>mRect_cnt/3&&!bond) {
+								floodFill(bin, Point(j / 3 + x, i + y), Scalar(0, 0, 0), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+								floodFill(dst, Point(j / 3 + x, i + y), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+							}
+						}
+					}
+			}
+		}
+	}
+
+	imwrite("dis2.bmp", dst);
+	for (int i = 0; i < dst.rows; i++) {
+		uchar* inData = dst.ptr<uchar>(i);
+		for (int j = 0; j < Cols; j += 3) {
+			if (inData[j] == 250 && inData[j + 1] == 250&& inData[j + 2] == 55)
+				remainder_Size++;
+			else if (inData[j+2] > 200)
+				edge_Size++;
+		}
+	}
+
+	float DB_rate = (float)(full_Size - edge_Size - remainder_Size) / (full_Size - edge_Size);
+
+	float final_result = DB_rate;
+	if (final_result < 0.9)
+		final_result *= offset;
+
+	ui->log->insertPlainText("DB Coverage Rate: ");
+	string s = to_string(final_result) + '\n';
+	ui->log->insertPlainText(s.c_str());
+
+	int x = 640, y = 480;
+	if (image.cols * 3 > image.rows * 4)
+		y = image.rows * 640 / image.cols;
+	else x = image.cols * 480 / image.rows;
+
+	cv::resize(dst, display_image, Size(x, y), 0, 0);
+	imwrite("display.bmp", display_image);
+
+	ui->label_show_image->setPixmap(QPixmap("./display.bmp"));
+
+}
+
+void DB_Area_Calc::on_pushButton_ClearBack_clicked()
+{
+	load_Panel_Value();
+	ui->log->setText("");
+
+	QString qs_name = QFileDialog::getOpenFileName(this, tr("Open Image"), "", tr("Image File(*.bmp *.jpg *.jpeg *.png *.pbm *.pgm *.ppm)"));
+	QTextCodec *code = QTextCodec::codecForName("gb18030");
+	name = code->fromUnicode(qs_name).data();
+
+	Mat dstImage;//目标图
+	Mat normImage;//归一化后的图
+	Mat scaledImage;//线性变换后的八位无符号整型的图
+
+	if (name.length() < 2) return;
+	image = imread(name, 1);
+	out_image = image.clone();
+	src1 = image.clone();
+	dstImage = image.clone();
+
+	WIDTH1 = image.cols / 64;
+	HEIGHT1 = image.rows / 64;
+
+	if (ui->checkBox_Prism->isChecked()) {	
+		prism_area_calc();
+	}
+	else {
+		sensor_area_calc();	
+	}
 
 }
 

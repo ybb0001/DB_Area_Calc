@@ -14,3 +14,5 @@
 *.vcxproj
 *.user
 *.qrc
+*.zip
+.vs/DB_Area_Calc/v14/.suo

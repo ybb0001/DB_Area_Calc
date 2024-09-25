@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_DB_Area_Calc_t {
-    QByteArrayData data[16];
-    char stringdata0[247];
+    QByteArrayData data[20];
+    char stringdata0[326];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -40,13 +40,17 @@ QT_MOC_LITERAL(5, 105, 16), // "load_Panel_Value"
 QT_MOC_LITERAL(6, 122, 21), // "get_Binaryztion_Level"
 QT_MOC_LITERAL(7, 144, 20), // "get_backGround_Level"
 QT_MOC_LITERAL(8, 165, 19), // "get_Image_Threshold"
-QT_MOC_LITERAL(9, 185, 12), // "Rect_Correct"
-QT_MOC_LITERAL(10, 198, 11), // "remove_Edge"
-QT_MOC_LITERAL(11, 210, 12), // "non_Bond_Fix"
-QT_MOC_LITERAL(12, 223, 8), // "edge_Fix"
-QT_MOC_LITERAL(13, 232, 5), // "getTH"
-QT_MOC_LITERAL(14, 238, 1), // "k"
-QT_MOC_LITERAL(15, 240, 6) // "offset"
+QT_MOC_LITERAL(9, 185, 23), // "get_Image_Threshold_low"
+QT_MOC_LITERAL(10, 209, 21), // "get_Image_100_min_max"
+QT_MOC_LITERAL(11, 231, 16), // "sensor_area_calc"
+QT_MOC_LITERAL(12, 248, 15), // "prism_area_calc"
+QT_MOC_LITERAL(13, 264, 12), // "Rect_Correct"
+QT_MOC_LITERAL(14, 277, 11), // "remove_Edge"
+QT_MOC_LITERAL(15, 289, 12), // "non_Bond_Fix"
+QT_MOC_LITERAL(16, 302, 8), // "edge_Fix"
+QT_MOC_LITERAL(17, 311, 5), // "getTH"
+QT_MOC_LITERAL(18, 317, 1), // "k"
+QT_MOC_LITERAL(19, 319, 6) // "offset"
 
     },
     "DB_Area_Calc\0on_pushButton_open_BMP_clicked\0"
@@ -54,6 +58,8 @@ QT_MOC_LITERAL(15, 240, 6) // "offset"
     "on_pushButton_clear_clicked\0"
     "load_Panel_Value\0get_Binaryztion_Level\0"
     "get_backGround_Level\0get_Image_Threshold\0"
+    "get_Image_Threshold_low\0get_Image_100_min_max\0"
+    "sensor_area_calc\0prism_area_calc\0"
     "Rect_Correct\0remove_Edge\0non_Bond_Fix\0"
     "edge_Fix\0getTH\0k\0offset"
 };
@@ -65,7 +71,7 @@ static const uint qt_meta_data_DB_Area_Calc[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      12,   14, // methods
+      16,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -73,18 +79,22 @@ static const uint qt_meta_data_DB_Area_Calc[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   74,    2, 0x08 /* Private */,
-       3,    0,   75,    2, 0x08 /* Private */,
-       4,    0,   76,    2, 0x08 /* Private */,
-       5,    0,   77,    2, 0x08 /* Private */,
-       6,    0,   78,    2, 0x08 /* Private */,
-       7,    0,   79,    2, 0x08 /* Private */,
-       8,    0,   80,    2, 0x08 /* Private */,
-       9,    0,   81,    2, 0x08 /* Private */,
-      10,    0,   82,    2, 0x08 /* Private */,
-      11,    0,   83,    2, 0x08 /* Private */,
-      12,    0,   84,    2, 0x08 /* Private */,
-      13,    2,   85,    2, 0x08 /* Private */,
+       1,    0,   94,    2, 0x08 /* Private */,
+       3,    0,   95,    2, 0x08 /* Private */,
+       4,    0,   96,    2, 0x08 /* Private */,
+       5,    0,   97,    2, 0x08 /* Private */,
+       6,    0,   98,    2, 0x08 /* Private */,
+       7,    0,   99,    2, 0x08 /* Private */,
+       8,    0,  100,    2, 0x08 /* Private */,
+       9,    0,  101,    2, 0x08 /* Private */,
+      10,    0,  102,    2, 0x08 /* Private */,
+      11,    0,  103,    2, 0x08 /* Private */,
+      12,    0,  104,    2, 0x08 /* Private */,
+      13,    0,  105,    2, 0x08 /* Private */,
+      14,    0,  106,    2, 0x08 /* Private */,
+      15,    0,  107,    2, 0x08 /* Private */,
+      16,    0,  108,    2, 0x08 /* Private */,
+      17,    2,  109,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -94,11 +104,15 @@ static const uint qt_meta_data_DB_Area_Calc[] = {
     QMetaType::UInt,
     QMetaType::UInt,
     QMetaType::UInt,
+    QMetaType::UInt,
+    QMetaType::UInt,
+    QMetaType::Void,
+    QMetaType::Void,
     QMetaType::Int,
     QMetaType::Int,
     QMetaType::Int,
     QMetaType::Int,
-    QMetaType::Int, QMetaType::Int, QMetaType::Int,   14,   15,
+    QMetaType::Int, QMetaType::Int, QMetaType::Int,   18,   19,
 
        0        // eod
 };
@@ -119,15 +133,21 @@ void DB_Area_Calc::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id
             if (_a[0]) *reinterpret_cast< uint*>(_a[0]) = _r; }  break;
         case 6: { uint _r = _t->get_Image_Threshold();
             if (_a[0]) *reinterpret_cast< uint*>(_a[0]) = _r; }  break;
-        case 7: { int _r = _t->Rect_Correct();
+        case 7: { uint _r = _t->get_Image_Threshold_low();
+            if (_a[0]) *reinterpret_cast< uint*>(_a[0]) = _r; }  break;
+        case 8: { uint _r = _t->get_Image_100_min_max();
+            if (_a[0]) *reinterpret_cast< uint*>(_a[0]) = _r; }  break;
+        case 9: _t->sensor_area_calc(); break;
+        case 10: _t->prism_area_calc(); break;
+        case 11: { int _r = _t->Rect_Correct();
             if (_a[0]) *reinterpret_cast< int*>(_a[0]) = _r; }  break;
-        case 8: { int _r = _t->remove_Edge();
+        case 12: { int _r = _t->remove_Edge();
             if (_a[0]) *reinterpret_cast< int*>(_a[0]) = _r; }  break;
-        case 9: { int _r = _t->non_Bond_Fix();
+        case 13: { int _r = _t->non_Bond_Fix();
             if (_a[0]) *reinterpret_cast< int*>(_a[0]) = _r; }  break;
-        case 10: { int _r = _t->edge_Fix();
+        case 14: { int _r = _t->edge_Fix();
             if (_a[0]) *reinterpret_cast< int*>(_a[0]) = _r; }  break;
-        case 11: { int _r = _t->getTH((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])));
+        case 15: { int _r = _t->getTH((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])));
             if (_a[0]) *reinterpret_cast< int*>(_a[0]) = _r; }  break;
         default: ;
         }
@@ -159,13 +179,13 @@ int DB_Area_Calc::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 12)
+        if (_id < 16)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 12;
+        _id -= 16;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 12)
+        if (_id < 16)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 12;
+        _id -= 16;
     }
     return _id;
 }

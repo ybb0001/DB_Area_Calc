@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>DB_Area_Calc R3_20211017</string>
+   <string>DB_Area_Calc_20240828</string>
   </property>
   <widget class="QLabel" name="label_show_image">
    <property name="geometry">
@@ -269,14 +269,14 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="geometry">
     <rect>
-     <x>570</x>
+     <x>575</x>
      <y>500</y>
      <width>81</width>
      <height>30</height>
     </rect>
    </property>
    <property name="text">
-    <string>Sensor Image</string>
+    <string>Open Image</string>
    </property>
    <property name="checkable">
     <bool>false</bool>
@@ -293,6 +293,22 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>Supported by songye.guo@samsung.com</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_Prism">
+   <property name="geometry">
+    <rect>
+     <x>590</x>
+     <y>540</y>
+     <width>51</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Prism</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>
