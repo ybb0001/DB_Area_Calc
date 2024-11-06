@@ -1098,7 +1098,8 @@ void DB_Area_Calc::prism_area_calc() {
 
 	int Cols = image.cols * 3;
 	int ret = 0, n = 0, TH = 0, Valid_TH = 48;
-	if (image.cols < 600)Valid_TH = image.cols / 20;
+	if (image.cols < 600)
+		Valid_TH = image.cols / 20;
 
 	dia = sqrt(image.cols*image.cols + image.rows*image.rows);
 	image_Total_Pixel = image.cols*image.rows;
@@ -1271,7 +1272,7 @@ void DB_Area_Calc::prism_area_calc() {
 					Line_Rect[1] = Line_Valid[i];
 				}
 			}
-			else if (Line_Rect[0].theta> CV_PI * 3 / 4 * 0.8&&Line_Rect[0].theta< CV_PI * 3 / 4 * 1.2&&  Line_Valid[i].v > CV_PI / 4 * 0.95&&Line_Valid[i].v < CV_PI / 4 * 1.05) {
+			else if (Line_Rect[0].theta> CV_PI * 3 / 4 * 0.8&&Line_Rect[0].theta< CV_PI * 3 / 4 * 1.2&&  Line_Valid[i].v > CV_PI / 4 * 0.92&&Line_Valid[i].v < CV_PI / 4 * 1.05) {
 				if (Line_Valid[i].valid_Point > Line_Rect[1].valid_Point) 
 					if (Line_Rect[1].rho == 0 || Line_Valid[i].rho<Line_Rect[1].rho + 15) {
 					Line_Rect[1] = Line_Valid[i];
@@ -1282,7 +1283,8 @@ void DB_Area_Calc::prism_area_calc() {
 					if(Line_Rect[1].rho ==0||Line_Valid[i].rho<Line_Rect[1].rho+15)
 						Line_Rect[1] = Line_Valid[i];
 				}
-				else if (Line_Valid[i].valid_Point>32 && Line_Valid[i].valid_Point > Line_Rect[1].valid_Point*0.6&&Line_Valid[i].rho<Line_Rect[1].rho) {
+				else if (Line_Valid[i].valid_Point>32 && Line_Valid[i].valid_Point > Line_Rect[1].valid_Point*0.6&&Line_Valid[i].rho<Line_Rect[1].rho
+					&&Line_Valid[i].v>Line_Rect[1].v-0.01&&Line_Valid[i].v<Line_Rect[1].v + 0.01) {
 					Line_Rect[1] = Line_Valid[i];
 				}
 			}
@@ -1291,8 +1293,8 @@ void DB_Area_Calc::prism_area_calc() {
 					Line_Rect[2] = Line_Valid[i];
 				}
 			}
-			else if ((abs(Line_Valid[i].v) > CV_PI * 3 / 4 * 0.97&&abs(Line_Valid[i].v) < CV_PI * 3 / 4 * 1.03)||
-					(abs(Line_Valid[i].v) > CV_PI / 4 * 0.97&&abs(Line_Valid[i].v) < CV_PI / 4 * 1.03)) {
+			else if ((abs(Line_Valid[i].v) > CV_PI * 3 / 4 * 0.94&&abs(Line_Valid[i].v) < CV_PI * 3 / 4 * 1.06)||
+					(abs(Line_Valid[i].v) > CV_PI / 4 * 0.94&&abs(Line_Valid[i].v) < CV_PI / 4 * 1.06)) {
 					if (Line_Valid[i].valid_Point > Line_Rect[2].valid_Point * 2) {
 						Line_Rect[2] = Line_Valid[i];
 					}
@@ -1304,6 +1306,7 @@ void DB_Area_Calc::prism_area_calc() {
 					}
 				}	
 		}
+
 	for (int k = 1; k< 3; k++)
 		if (Line_Rect[k].valid_Point == 0) {
 			string s = "Can not find Sensor Rect Outline! \n";
@@ -1324,33 +1327,31 @@ void DB_Area_Calc::prism_area_calc() {
 	}
 
 	// short edge diff angle selection 
-	for (int k = 1; k < 3; k++) {
-		if (Line_Rect[0].theta< CV_PI / 8 || Line_Rect[0].theta > CV_PI * 7 / 8) {
-			Line_Rect[k].v = abs(Line_Rect[0].theta - Line_Rect[k].theta) - (CV_PI / 2);
-			for (int i = 0; i < n; i++)
-				if (Line_Valid[i].theta > CV_PI * 1 / 2 * 0.9&&Line_Valid[i].theta < CV_PI * 1 / 2 * 1.1) {
-					Line_Valid[i].v = abs(Line_Rect[0].theta - Line_Valid[i].theta) - (CV_PI / 2);
+	if (Line_Rect[0].theta< CV_PI / 8 || Line_Rect[0].theta > CV_PI * 7 / 8) {
+		Line_Rect[1].v = abs(Line_Rect[0].theta - Line_Rect[1].theta) - (CV_PI / 2);
+		for (int i = 0; i < n; i++)
+			if (Line_Valid[i].theta > CV_PI * 1 / 2 * 0.9&&Line_Valid[i].theta < CV_PI * 1 / 2 * 1.1) {
+				Line_Valid[i].v = abs(Line_Rect[0].theta - Line_Valid[i].theta) - (CV_PI / 2);
 
-					if (abs(Line_Valid[i].v) < abs(Line_Rect[k].v) && Line_Valid[i].rho <Line_Rect[k].rho + 15 && Line_Valid[i].valid_Point > Line_Rect[k].valid_Point*0.6) {
-						Line_Rect[k] = Line_Valid[i];
-						break;
-					}
+				if (abs(Line_Valid[i].v) < abs(Line_Rect[1].v) && Line_Valid[i].rho <Line_Rect[1].rho + 15 && Line_Valid[i].valid_Point > Line_Rect[1].valid_Point*0.6) {
+					Line_Rect[1] = Line_Valid[i];
 				}
+			}
 
-		}else if (Line_Rect[k].theta > CV_PI * 1 / 2 * 0.9&&Line_Rect[k].theta < CV_PI * 1 / 2 * 1.1) {
-			Line_Rect[k].v = abs(Line_Rect[3 - k].theta - Line_Rect[k].theta) - (CV_PI / 2);
-			for (int i = 0; i < n; i++)
-				if (Line_Valid[i].theta > CV_PI * 1 / 2 * 0.9&&Line_Valid[i].theta < CV_PI * 1 / 2 * 1.1) {
-					Line_Valid[i].v = abs(Line_Rect[3 - k].theta - Line_Valid[i].theta) - (CV_PI / 2);
-
-					if (abs(Line_Valid[i].v) < abs(Line_Rect[k].v) && Line_Valid[i].rho <Line_Rect[k].rho + 15 && Line_Valid[i].valid_Point > Line_Rect[k].valid_Point*0.6) {
-						Line_Rect[k] = Line_Valid[i];
-						break;
-					}
-				}
-		}
 	}
+	else if (Line_Rect[1].theta > CV_PI * 1 / 2 * 0.9&&Line_Rect[1].theta < CV_PI * 1 / 2 * 1.1) {
+		Line_Rect[1].v = abs(Line_Rect[1].theta - Line_Rect[2].theta) - (CV_PI / 2);
+		for (int i = 0; i < n; i++)
+			if (Line_Valid[i].theta > CV_PI * 1 / 2 * 0.9&&Line_Valid[i].theta < CV_PI * 1 / 2 * 1.1) {
+				Line_Valid[i].v = abs(Line_Rect[2].theta - Line_Valid[i].theta) - (CV_PI / 2);
 
+				if(Line_Valid[i].valid_Point > Line_Rect[1].valid_Point*0.6)
+				if (abs(Line_Valid[i].v) < abs(Line_Rect[1].v&&abs(Line_Rect[1].pt1.y+ Line_Rect[1].pt2.y- Line_Valid[i].pt1.y + Line_Valid[i].pt2.y)<6) ) {
+					Line_Rect[1] = Line_Valid[i];
+				}
+			}
+	}
+	
 	for (int i = 0; i < 3; i++) {
 
 		int j = (i + 1) % 3;
@@ -1427,6 +1428,27 @@ void DB_Area_Calc::prism_area_calc() {
 	for (int i = 3; i < dst.rows-3; i++) {
 		uchar* inData = dst.ptr<uchar>(i);
 		for (int j = 3; j < Cols-3; j += 3) {
+
+			if (bin.at<uchar>(i, j / 3) == 100) {
+				bool broken_area = true;
+				for (int y = -5; y <= 5; y += 1)
+					for (int x = -5; x <= 5; x += 1) {
+						if (bin.at<uchar>(i + y, j / 3 + x) == 255) {
+							broken_area = false;
+								break;
+						}
+					}
+				if (broken_area) {
+					int cnt = floodFill(bin, Point(j / 3, i ), Scalar(0, 0, 0), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+					if (cnt < max_line * 5) {
+						floodFill(bin, Point(j / 3, i ), Scalar(0, 0, 0), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+						floodFill(dst, Point(j / 3, i), Scalar(250, 250, 55), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));
+					}
+				}
+				//else {
+				//	int cnt = floodFill(bin, Point(j / 3 , i ), Scalar(230, 230, 230), &ccomp, Scalar(20, 20, 20), Scalar(20, 20, 20));		
+				//}
+			}
 			if (inData[j] == 255 && inData[j + 1] == 255 && inData[j + 2] == 255) {
 
 				if (i > 420 && j / 3 < 430) {
